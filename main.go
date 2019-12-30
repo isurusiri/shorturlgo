@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -22,7 +23,32 @@ type ShortURL struct {
 func ExpandEndpoint(w http.ResponseWriter, req *http.Request) {}
 
 // CreateEndpoint creates a new endpoint
-func CreateEndpoint(w http.ResponseWriter, req *http.Request) {}
+func CreateEndpoint(w http.ResponseWriter, req *http.Request) {
+	var url ShortURL
+	_ = json.NewDecoder(req.Body).Decode($url)
+	var n1q1Params []interface{}
+	n1q1Params = append(n1q1Params, url.LongURL)
+	query := gocb.NewN1qlQuery("SELECT `" + bucketName + "`.* FROM `" + bucketName + "` WHERE longUrl = $1")
+	rows, err := bucket.ExecuteN1qlQuery(query, n1qlParams)
+	if err != nil {
+        w.WriteHeader(401)
+        w.Write([]byte(err.Error()))
+        return
+	}
+	var row ShortURL
+    rows.One(&row)
+    if row == (ShortURL{}) {
+        hd := hashids.NewData()
+        h := hashids.NewWithData(hd)
+        now := time.Now()
+        url.ID, _ = h.Encode([]int{int(now.Unix())})
+        url.ShortUrl = "http://localhost:12345/" + url.ID
+        bucket.Insert(url.ID, url, 0)
+    } else {
+        url = row
+    }
+    json.NewEncoder(w).Encode(url)
+}
 
 // RootEndpoint represents the root endpoint
 func RootEndpoint(w http.ResponseWriter, req *http.Request) {}
