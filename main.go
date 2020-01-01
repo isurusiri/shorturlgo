@@ -20,7 +20,16 @@ type ShortURL struct {
 }
 
 // ExpandEndpoint exapands a new endpoint
-func ExpandEndpoint(w http.ResponseWriter, req *http.Request) {}
+func ExpandEndpoint(w http.ResponseWriter, req *http.Request) {
+	var n1q1Params = []interface{}
+	query := gocb.NewN1qlQuery("SELECT `" + bucketName + "`.* FROM `" + bucketName + "` WHERE shortUrl = $1")
+	params := req.URL.Query()
+	n1q1Params = append(n1q1Params, params.Get("ShortURL"))
+	rows, _ := bucket.ExecuteN1qlQuery(query, n1q1Params)
+	var row = ShortURL
+	rows.One(&row)
+	json.NewEncoder(w).Encode(row)
+}
 
 // CreateEndpoint creates a new endpoint
 func CreateEndpoint(w http.ResponseWriter, req *http.Request) {
