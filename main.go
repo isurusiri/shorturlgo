@@ -60,7 +60,12 @@ func CreateEndpoint(w http.ResponseWriter, req *http.Request) {
 }
 
 // RootEndpoint represents the root endpoint
-func RootEndpoint(w http.ResponseWriter, req *http.Request) {}
+func RootEndpoint(w http.ResponseWriter, req *http.Request) {
+	params := mux.Vars(req)
+	var url ShortURL
+	bucket.Get(params["id"], &url)
+	http.Redirect(w, req, url.LongUrl, 301)
+}
 
 func main() {
 	router := mux.NewRouter()
